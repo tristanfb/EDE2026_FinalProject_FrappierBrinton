@@ -4,6 +4,7 @@ author: "TristanFB"
 date: "2026-03-21"
 output: html_document
 ---
+GitHub link: https://github.com/tristanfb/EDE2026_FinalProject_FrappierBrinton
 
 # 1.INTRODUCTION: RATIONALE AND RESEARCH QUESTIONS
 
@@ -201,7 +202,7 @@ writeRaster(Burn_yn, here("FinalProjectData/Processed/Burn_30m_processed.tif"),o
 writeRaster(DEM, here("FinalProjectData/Processed/Elevation_processed.tif"),overwrite = TRUE)
 writeRaster(Slope, here("FinalProjectData/Processed/Slope_ASTER_90m_processed.tif"),overwrite = TRUE)
 writeRaster(Aspect, here("FinalProjectData/Processed/Aspect_ASTER2_30m_processed.tif"),overwrite = TRUE)
-writeRaster(road_dist, here("FinalProjectData/Processed/Roads/Road_dist_processed.tif"),overwrite = TRUE)
+writeRaster(road_dist, here("FinalProjectData/Processed/Road_dist_processed.tif"),overwrite = TRUE)
 ```
 
 Road shapfiles were used to generate a distance to road raster.
