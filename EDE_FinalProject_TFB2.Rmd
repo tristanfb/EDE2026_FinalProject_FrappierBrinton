@@ -1,6 +1,6 @@
 ---
-title: "EDE_FinalProject_TFB"
-author: "TristanFB"
+title: "Final Project for Environmental Data Exploration (ENVIRON 872)"
+author: "Tristan Frappier-Brinton"
 date: "2026-03-21"
 output: html_document
 ---
@@ -139,7 +139,7 @@ mapview(LandCover$ESA_WorldCover_10m_2020_v100_S18E045_Map,
 # 4. Data Wrangling
 
 All datasets were projected to the same coordinate system as the burn map (EPSG: 9001), resampled if raster data to match the exact extent and resolution of the burn data, and cropped only include area within ANP. Road maps were used to generate a raster dataset of distance to road (m), and burn severity maps were converted to binary maps of burned/unburned.
-```{r Data Wrangling 1, message=FALSE, error=FALSE, warning=FALSE}
+```{r Data Wrangling 1, echo=FALSE, message=FALSE, error=FALSE, warning=FALSE}
 #I am creating an ANP shapefile with the LandCover crs so I can crop LandCover before manipulating it to reduce run time
 ANP2 <- st_transform(ANP, crs(LandCover))
 LandCover <- crop(LandCover, ANP2, mask = TRUE)
@@ -162,7 +162,7 @@ LandCover$Water[LandCover$ESA_WorldCover_10m_2020_v100_S18E045_Map == 80] <- 1
 ```
 
 
-```{r time invariant variables, message=FALSE, error=FALSE, warning=FALSE}
+```{r time invariant variables, echo=FALSE, message=FALSE, error=FALSE, warning=FALSE}
 #Project shapefiles and rasters to have the same coordinate reference system as the Burn map
 ANP <- st_transform(ANP, crs(Burn))
 PM_Area <- st_transform(PM_Area, crs(Burn))
@@ -195,17 +195,17 @@ Aspect <- resample( Aspect,Burn, method='bilinear')
 road_dist <- resample(road_dist,Burn, method='bilinear')
 
 #Save Processed rasters
-writeRaster(Burn_yn, here("FinalProjectData/Processed/Burn_30m_processed.tif"),overwrite = TRUE)
+#writeRaster(Burn_yn, here("FinalProjectData/Processed/Burn_30m_processed.tif"),overwrite = TRUE)
 #the following output is over 100 mb which is large than GitHub can store
 #writeRaster(LandCover, here("FinalProjectData/Processed/ESA_WorldCover_10m_2020_v100_S18E045_Map_processed.tif"),overwrite = TRUE)
 
-writeRaster(DEM, here("FinalProjectData/Processed/Elevation_processed.tif"),overwrite = TRUE)
-writeRaster(Slope, here("FinalProjectData/Processed/Slope_ASTER_90m_processed.tif"),overwrite = TRUE)
-writeRaster(Aspect, here("FinalProjectData/Processed/Aspect_ASTER2_30m_processed.tif"),overwrite = TRUE)
-writeRaster(road_dist, here("FinalProjectData/Processed/Road_dist_processed.tif"),overwrite = TRUE)
+#writeRaster(DEM, here("FinalProjectData/Processed/Elevation_processed.tif"),overwrite = TRUE)
+#writeRaster(Slope, here("FinalProjectData/Processed/Slope_ASTER_90m_processed.tif"),overwrite = TRUE)
+#writeRaster(Aspect, here("FinalProjectData/Processed/Aspect_ASTER2_30m_processed.tif"),overwrite = TRUE)
+#writeRaster(road_dist, here("FinalProjectData/Processed/Road_dist_processed.tif"),overwrite = TRUE)
 ```
 
-Road shapfiles were used to generate a distance to road raster.
+Road shapfiles were used to generate a distance to road raster (Fig. 7).
 
 ```{r mapview Road Distance, echo=FALSE, fig.cap ="Distance to Road (m) in Ankarafantsika National Park, Madagascar", message=FALSE, error=FALSE, warning=FALSE, fig.align="left", fig.height=3.5,}
 mapview(road_dist, layer.name = "Distance to Road (m)") + 
@@ -213,8 +213,10 @@ mapview(road_dist, layer.name = "Distance to Road (m)") +
           color = "green", col.regions = "green", 
           alpha.regions = 0, lwd=2)
 ```
+**Figure 7.** Distance to road raster across ANP.
 
-A binary burn map was generated for use in logistic regression.
+
+A binary burn map was generated for use in logistic regression (Fig. 8).
 
 ```{r mapview Burned Area, echo=FALSE, fig.cap ="2021 Burn Area in Ankarafantsika National Park, Madagascar", message=FALSE, error=FALSE, warning=FALSE, fig.align="left", fig.height=3.5,}
 
@@ -225,10 +227,11 @@ mapview(PM_Area, layer.name = "Planet Madagascar Area", color = "lightblue", col
           color = "green", col.regions = "green", 
           alpha.regions = 0, lwd=1)
 ```
+**Figure 8.** Binary burn map derived from LANDSAT imagery for ANP in 2021.
 
 In preparation for logistic regression, all raster pixels were converted to points for ease of manipulation. Aspect values were also sorted into their cardinal directions (North South, East, and West). 
 
-```{r Model Prep}
+```{r Model Prep, echo=FALSE,  message=FALSE, error=FALSE, warning=FALSE}
 LandCover_point <- as.data.frame(rasterToPoints(LandCover))
 names(road_dist)[names(road_dist) == 'layer'] <- 'road_dist'
 road_dist_point <- as.data.frame(rasterToPoints(road_dist))
@@ -236,7 +239,7 @@ road_dist_point <- as.data.frame(rasterToPoints(road_dist))
 Aspect_point <- as.data.frame(rasterToPoints(Aspect))
 #names(Slope)[names(Slope) == 'layer'] <- 'Slope'
 Slope_point <- as.data.frame(rasterToPoints(Slope))
-#names(DEM)[names(DEM) == 'layer'] <- 'Elevation'
+names(DEM)[names(DEM) == 'layer'] <- 'Elevation'
 DEM_point <- as.data.frame(rasterToPoints(DEM))
 
 
@@ -265,9 +268,9 @@ raster_points <- raster_points %>% filter(Water != 1)
 Before performing logistic regression, I investigated the relationships between individual predictors and the proportion of pixels burned. 
 
 
-```{r Data Exploration}
+```{r Data Exploration, echo=FALSE,  message=FALSE, error=FALSE, warning=FALSE}
 #round predictor variables to values that will be used to bin samples
-raster_points$Elevation_round5 <- round(raster_points$ASTER_ExtractBox / 5) * 5
+raster_points$Elevation_round5 <- round(raster_points$Elevation / 5) * 5
 raster_points$Slope_round <- round(raster_points$Slope)
 raster_points$Road_round10 <- round(raster_points$road_dist / 100) * 100
 
@@ -300,7 +303,7 @@ raster_points_Roads <- raster_points %>%
 
 
 
-The proportion of burned pixels seems to decrease somewhat linearly until 20,000 m from road, at which point the proportion of burned pixels increase sharply (Fig. 7A). We can see from histograms that the vast majority of pixels are within 20 km of a road (Fig. 7B), meaning that a decreasing monotonic relationship with distance to road would describe the relationship to burning for most pixels. Future analyses should consider if a non-monotonic relationship should be implemented for pixels more than 20 km from a road, or if this relationship is a byproduct of correlation with other factors for these relatively few pixels.
+The proportion of burned pixels seems to decrease somewhat linearly until 20,000 m from road, at which point the proportion of burned pixels increase sharply (Fig. 9A). We can see from histograms that the vast majority of pixels are within 20 km of a road (Fig. 9B), meaning that a decreasing monotonic relationship with distance to road would describe the relationship to burning for most pixels. Future analyses should consider if a non-monotonic relationship should be implemented for pixels more than 20 km from a road, or if this relationship is a byproduct of correlation with other factors for these relatively few pixels.
 
 ```{r Road Distance Burn, echo=FALSE,message=FALSE, error=FALSE, warning=FALSE, fig.align="left", fig.height=3.5,}
 ggplot(raster_points_Roads, aes(x=Road_round10, y=BurnProportion)) + geom_line() +
@@ -321,11 +324,11 @@ ggplot(na.omit(raster_points), aes(x = road_dist)) +
     y = "Pixel Count"
   )
 ```
-**Figure 7.** Comparison of Distance to Road and Burn Status. A) The proportion of pixels of within each 100 m bin of distance to road (m) that burned. B) Histograms of the distance to road of unburned and burned pixels.
+**Figure 9.** Comparison of Distance to Road and Burn Status. A) The proportion of pixels of within each 100 m bin of distance to road (m) that burned. B) Histograms of the distance to road of unburned and burned pixels.
 
 
 
-Elevation appears to have a fairly linear relationship with the proportion of pixels burned, with fewer burned pixels at higher elevation (Fig. 8).
+Elevation appears to have a fairly linear relationship with the proportion of pixels burned, with fewer burned pixels at higher elevation (Fig. 10).
 
 ```{r Elevation Burn, echo=FALSE,  message=FALSE, error=FALSE, warning=FALSE, fig.align="left", fig.height=3.5,}
 ggplot(raster_points_DEM, aes(x=Elevation_round5, y=BurnProportion)) + geom_line() +
@@ -337,7 +340,7 @@ ggplot(raster_points_DEM, aes(x=Elevation_round5, y=BurnProportion)) + geom_line
     x = "Elevation (m)",
     y = "Proportion of Pixels Burned")
 
-ggplot(na.omit(raster_points), aes(x = ASTER_ExtractBox)) +
+ggplot(na.omit(raster_points), aes(x = Elevation)) +
   geom_histogram(bins = 20, fill = "steelblue", color = "black") +
   facet_wrap(~ factor(severity_class,
                       levels = c(0, 1),
@@ -349,12 +352,12 @@ ggplot(na.omit(raster_points), aes(x = ASTER_ExtractBox)) +
     y = "Pixel Count"
   )
 ```
-**Figure 8.** Comparison of Elevation and Burn Status. A) The proportion of pixels of within each 5 m bin of elevation (m) that burned. B) Histograms of the elevation of unburned and burned pixels.
+**Figure 10.** Comparison of Elevation and Burn Status. A) The proportion of pixels of within each 5 m bin of elevation (m) that burned. B) Histograms of the elevation of unburned and burned pixels.
 
 
 
 
-Slope does not appear to have a strictly linear monotonic relationship with proportion of pixels burned (Fig. 9). The vast majority of pixels have a slope below 5 degrees, for which the relationship appears to be linear and increasing, but this relationship may not accurately describe the fire behaviour of steeper slopes.
+Slope does not appear to have a strictly linear monotonic relationship with proportion of pixels burned (Fig. 11). The vast majority of pixels have a slope below 5 degrees, for which the relationship appears to be linear and increasing, but this relationship may not accurately describe the fire behaviour of steeper slopes.
 
 ```{r Slope Burn, echo=FALSE,  message=FALSE, error=FALSE, warning=FALSE, fig.align="left", fig.height=3.5,}
 ggplot(raster_points_Slope, aes(x=Slope_round, y=BurnProportion)) + geom_line() +
@@ -378,22 +381,24 @@ ggplot(na.omit(raster_points), aes(x = Slope_ASTER_90m)) +
     y = "Pixel Count"
   )
 ```
-**Figure 9.** Comparison of Slope and Burn Status. A) The proportion of pixels of within each degree of slope that burned. B) Histograms of the slope of unburned and burned pixels.
+**Figure 11.** Comparison of Slope and Burn Status. A) The proportion of pixels of within each degree of slope that burned. B) Histograms of the slope of unburned and burned pixels.
 
 
 # 6 Data analysis
 ```{r final models}
 #run logistic regression model
-log_model <- glm(data = na.omit(raster_points) , severity_class ~ ASTER_ExtractBox + aspect_dir + as.factor(Protection) + Slope_ASTER_90m + road_dist +as.factor(Forest) , family = binomial)
-summary(log_model)
+log_model <- glm(data = na.omit(raster_points) , severity_class ~ Elevation + aspect_dir + as.factor(Protection) + Slope_ASTER_90m + road_dist +as.factor(Forest) , family = binomial)
 
+summary(log_model)
+```
+
+```{r model results, echo=FALSE, message=FALSE, error=FALSE, warning=FALSE}
 #save results
 results <- summary(log_model)
 results2 <- as.data.frame(results$coefficients)
 results2$variable <- rownames(results2)
 ```
-
-Protection from Planet Madagascar was significantly (p<2e-16) correlated with a lower probability of burning.  The estimated effect size of `r results2$Estimate[results2$variable=="as.factor(Protection)1"]`in the logistic regression corresponds to a `r round(100*(1-2.718281828^ results2$Estimate[results2$variable=="as.factor(Protection)1"])*10)/10` % reduction in the probability of burning for any given pixel.
+Protection from Planet Madagascar was significantly (p<2e-16) correlated with a lower probability of burning.  The estimated effect size of `r round(results2$Estimate[results2$variable=="as.factor(Protection)1"]*100)/100` in the logistic regression corresponds to a `r round(100*(1-2.718281828^ results2$Estimate[results2$variable=="as.factor(Protection)1"])*10)/10` % reduction in the probability of burning for any given pixel.
 
 Other environmental covariates were also significantly related to the proportion of burned pixels. Odds of a pixel burning increased with slope and forest cover, and decreased with distance to road and elevation. The directions of these changes all match
 
